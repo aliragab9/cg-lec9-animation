@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lec 9 — Animation | Computer Graphics</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a26;
+    --border: #2a2a40;
+    --accent: #7c6af7;
+    --accent2: #f76c6c;
+    --accent3: #6cf7c8;
+    --accent4: #f7c96c;
+    --text: #e8e8f0;
+    --muted: #8888aa;
+    --glow: rgba(124,106,247,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Cairo', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 20%, rgba(124,106,247,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(108,247,200,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ===== HEADER ===== */
+  header {
+    position: relative;
+    padding: 60px 40px 40px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+
+  .lec-tag {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent3);
+    background: rgba(108,247,200,0.1);
+    border: 1px solid rgba(108,247,200,0.3);
+    padding: 4px 14px;
+    border-radius: 20px;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    animation: pulse 3s ease infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 900;
+    line-height: 1;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent3) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 1rem;
+    font-weight: 300;
+  }
+
+  /* ===== NAV ===== */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,15,0.9);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  nav::-webkit-scrollbar { display: none; }
+
+  nav a {
+    display: inline-block;
+    padding: 14px 18px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all 0.25s;
+  }
+
+  nav a:hover {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ===== MAIN LAYOUT ===== */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 60px 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== SECTIONS ===== */
+  section {
+    margin-bottom: 80px;
+    scroll-margin-top: 60px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .section-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    background: rgba(124,106,247,0.15);
+    border: 1px solid rgba(124,106,247,0.3);
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 1px;
+  }
+
+  h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent3);
+    margin-bottom: 10px;
+  }
+
+  p {
+    color: #b0b0c8;
+    line-height: 1.9;
+    font-size: 0.95rem;
+  }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 30px var(--glow);
+  }
+
+  .card-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+
+  .app-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: all 0.25s;
+    cursor: default;
+  }
+
+  .app-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(124,106,247,0.2);
+  }
+
+  .app-icon {
+    font-size: 1.6rem;
+    min-width: 40px;
+    text-align: center;
+  }
+
+  .app-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* ===== DEFINITION BOX ===== */
+  .def-box {
+    background: linear-gradient(135deg, rgba(124,106,247,0.1), rgba(108,247,200,0.05));
+    border: 1px solid rgba(124,106,247,0.4);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .def-box::before {
+    content: '"';
+    position: absolute;
+    top: -20px;
+    right: 20px;
+    font-size: 10rem;
+    color: rgba(124,106,247,0.1);
+    font-family: Georgia, serif;
+    line-height: 1;
+  }
+
+  .def-box .en {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--accent3);
+    margin-bottom: 10px;
+  }
+
+  .def-box .ar {
+    font-size: 1.05rem;
+    color: var(--text);
+    line-height: 1.8;
+  }
+
+  /* ===== TABLE ===== */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    direction: ltr;
+  }
+
+  .data-table th {
+    background: rgba(124,106,247,0.2);
+    color: var(--accent);
+    padding: 12px 16px;
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    border: 1px solid var(--border);
+  }
+
+  .data-table td {
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .data-table tr:hover td {
+    background: rgba(124,106,247,0.06);
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .badge-green { background: rgba(108,247,200,0.15); color: var(--accent3); }
+  .badge-red { background: rgba(247,108,108,0.15); color: var(--accent2); }
+  .badge-yellow { background: rgba(247,201,108,0.15); color: var(--accent4); }
+  .badge-purple { background: rgba(124,106,247,0.15); color: var(--accent); }
+
+  /* ===== TAG LIST ===== */
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .tag {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: 1px solid;
+  }
+
+  /* ===== FORMULA BOX ===== */
+  .formula-box {
+    background: #0d0d18;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 16px 0;
+    font-family: 'Space Mono', monospace;
+    direction: ltr;
+  }
+
+  .formula {
+    font-size: 1.2rem;
+    color: var(--accent4);
+    margin-bottom: 8px;
+  }
+
+  .formula-note {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* ===== TWO COL ===== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 700px) {
+    .two-col { grid-template-columns: 1fr; }
+    main { padding: 40px 20px; }
+    nav { padding: 0 20px; }
+    header { padding: 40px 20px 30px; }
+  }
+
+  /* ===== NOTE BOX ===== */
+  .note {
+    background: rgba(247,201,108,0.08);
+    border-right: 3px solid var(--accent4);
+    padding: 16px 20px;
+    border-radius: 0 10px 10px 0;
+    margin: 16px 0;
+    font-size: 0.88rem;
+    color: #d4b06a;
+    direction: rtl;
+  }
+
+  .note.error {
+    background: rgba(247,108,108,0.08);
+    border-right-color: var(--accent2);
+    color: #d46a6a;
+  }
+
+  .note.correct {
+    background: rgba(108,247,200,0.08);
+    border-right-color: var(--accent3);
+    color: #6ad4aa;
+  }
+
+  /* ===== PRINCIPLES GRID ===== */
+  .principles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  .principle-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    transition: all 0.25s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .principle-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  .principle-card:hover::before { opacity: 0.08; }
+  .principle-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+
+  .principle-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: rgba(124,106,247,0.3);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .principle-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .principle-desc {
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ===== DIVIDER ===== */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 40px 0;
+  }
+
+  /* ==================== SIMULATIONS ==================== */
+
+  /* --- Sim Header --- */
+  .sim-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .sim-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    background: rgba(247,201,108,0.15);
+    color: var(--accent4);
+    border: 1px solid rgba(247,201,108,0.4);
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+  }
+
+  .sim-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* --- Canvas wrapper --- */
+  .sim-box {
+    background: #080810;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+  }
+
+  .sim-controls {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 7px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    background: var(--card);
+    color: var(--text);
+    transition: all 0.2s;
+  }
+
+  .btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .btn-sm {
+    padding: 5px 12px;
+    font-size: 0.75rem;
+  }
+
+  .sim-info {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-right: auto;
+  }
+
+  input[type=range] {
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  label {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  /* ===== INTERPOLATION VIZ ===== */
+  .interp-demo {
+    background: #080810;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    text-align: center;
+    padding: 40px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.8rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  footer span { color: var(--accent); }
+
+  /* Fade in on load */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  section {
+    animation: fadeUp 0.5s ease both;
+  }
+
+  section:nth-child(1) { animation-delay: 0.05s; }
+  section:nth-child(2) { animation-delay: 0.1s; }
+  section:nth-child(3) { animation-delay: 0.15s; }
+  section:nth-child(4) { animation-delay: 0.2s; }
+  section:nth-child(5) { animation-delay: 0.25s; }
+  section:nth-child(6) { animation-delay: 0.3s; }
+  section:nth-child(7) { animation-delay: 0.35s; }
+  section:nth-child(8) { animation-delay: 0.4s; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="lec-tag">COMPUTER GRAPHICS · LEC 09</div>
+  <h1>Animation</h1>
+  <p class="subtitle">شرح تفاعلي كامل مع محاكاة مرئية</p>
+</header>
+
+<nav>
+  <a href="#def">التعريف</a>
+  <a href="#apps">التطبيقات</a>
+  <a href="#fps">الـ FPS</a>
+  <a href="#sim-fps">⚡ محاكاة FPS</a>
+  <a href="#formats">File Formats</a>
+  <a href="#categories">التصنيفان</a>
+  <a href="#keyframing">Keyframing</a>
+  <a href="#sim-key">⚡ محاكاة Keyframing</a>
+  <a href="#mocap">Motion Capture</a>
+  <a href="#cel">Cel Animation</a>
+  <a href="#sim-cel">⚡ محاكاة Cel</a>
+  <a href="#principles">12 Principles</a>
+  <a href="#interp">Interpolation</a>
+  <a href="#sim-interp">⚡ محاكاة Interpolation</a>
+</nav>
+
+<main>
+
+  <!-- ===== 1. DEFINITION ===== -->
+  <section id="def">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2>ما هي الـ Animation؟</h2>
+    </div>
+
+    <div class="def-box">
+      <div class="en">Animation = Giving life to objects by displaying a sequence of images to simulate motion</div>
+      <div class="ar">الأنيميشن = إعطاء حياة للأجسام عن طريق عرض تسلسل من الصور لمحاكاة الحركة — لازم يظهر فيها Space وTime بيتغيروا</div>
+    </div>
+
+    <div class="card">
+      <h3>ليه الأنيميشن بيشتغل؟ — Persistence of Vision</h3>
+      <p>الاسم الصح للظاهرة مش "Sensor Memory" — هي <strong style="color:var(--accent3)">Persistence of Vision</strong>. عينك بتفضل تشوف الصورة لجزء بسيط من الثانية بعد ما اختفت، فلما الـ frames بتتعاقب بسرعة كافية، دماغك بيدمجهم ويحس بحركة مستمرة.</p>
+      <div class="note error" style="margin-top:14px">
+        ⚠️ غلطة في النوتة: الاسم "Sensor Memory" مش دقيق — الصح Persistence of Vision + Phi Phenomenon
+      </div>
+      <div class="note correct">
+        ✅ الـ Sensory Memory (Iconic Memory) موجودة فعلاً لكنها جزء من التفسير، مش الظاهرة الأساسية
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>Animation Frame by Frame</h3>
+      <p>
+        <strong style="color:var(--accent)">Image ثابتة = Frame</strong> — كل Frame هي صورة بتتغير مع الـ Time.<br>
+        تسلسل الـ frames بسرعة كافية = إحساس بالحركة.
+      </p>
+      <div style="display:flex; gap:8px; align-items:center; margin-top:16px; font-family:'Space Mono',monospace; font-size:0.8rem; color:var(--muted); direction:ltr; flex-wrap:wrap;">
+        <span style="background:rgba(124,106,247,0.2); padding:6px 12px; border-radius:6px; color:var(--accent)">Frame 1</span>
+        <span>→</span>
+        <span style="background:rgba(124,106,247,0.2); padding:6px 12px; border-radius:6px; color:var(--accent)">Frame 2</span>
+        <span>→</span>
+        <span style="background:rgba(124,106,247,0.2); padding:6px 12px; border-radius:6px; color:var(--accent)">Frame 3</span>
+        <span>→</span>
+        <span style="color:var(--accent3)">... → Motion! 🎬</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 2. APPLICATIONS ===== -->
+  <section id="apps">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2>تطبيقات الـ Animation</h2>
+    </div>
+    <div class="card-grid">
+      <div class="app-card"><span class="app-icon">🎬</span><div><div class="app-name">Special Effects</div><div style="font-size:0.75rem;color:var(--muted)">Movies & TV</div></div></div>
+      <div class="app-card"><span class="app-icon">🎮</span><div><div class="app-name">Video Games</div></div></div>
+      <div class="app-card"><span class="app-icon">🥽</span><div><div class="app-name">Virtual Reality</div></div></div>
+      <div class="app-card"><span class="app-icon">🪖</span><div><div class="app-name">Military Training</div><div style="font-size:0.75rem;color:var(--muted)">Simulation</div></div></div>
+      <div class="app-card"><span class="app-icon">🏥</span><div><div class="app-name">Medical</div></div></div>
+      <div class="app-card"><span class="app-icon">🤖</span><div><div class="app-name">Robotics</div><div style="font-size:0.75rem;color:var(--muted)">Animatronics</div></div></div>
+      <div class="app-card"><span class="app-icon">📊</span><div><div class="app-name">Visualization</div></div></div>
+      <div class="app-card"><span class="app-icon">📡</span><div><div class="app-name">Communication</div></div></div>
+    </div>
+  </section>
+
+  <!-- ===== 3. FPS ===== -->
+  <section id="fps">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2>معدلات الـ Frames Per Second</h2>
+    </div>
+    <div class="card" style="overflow:auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>FPS</th>
+            <th>الاستخدام</th>
+            <th>ملاحظة</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="font-family:'Space Mono',monospace;color:var(--accent4)">24 fps</td><td>أفلام السينما</td><td><span class="badge badge-purple">Standard سينمائي</span></td></tr>
+          <tr><td style="font-family:'Space Mono',monospace;color:var(--accent4)">30 fps</td><td>تلفزيون HD</td><td><span class="badge badge-green">NTSC Standard</span></td></tr>
+          <tr><td style="font-family:'Space Mono',monospace;color:var(--accent4)">72 fps</td><td>Film in Cinema (HFR)</td><td><span class="badge badge-yellow">High Frame Rate</span></td></tr>
+          <tr><td style="font-family:'Space Mono',monospace;color:var(--accent4)">60 / 144 fps</td><td>Gaming / Monitors</td><td><span class="badge badge-green">Ultra smooth</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note" style="margin-top:16px">
+      ⚠️ مش معناه إنك مش تقدر تشوف أكتر من 30fps — العين البشرية تلاحظ فرق واضح فوق 30، لكن 24 اتعورفت كـ standard سينمائي لأسباب تاريخية وتقنية.
+    </div>
+  </section>
+
+  <!-- ===== SIM 1: FPS ===== -->
+  <section id="sim-fps">
+    <div class="sim-label">
+      <span class="sim-badge">SIMULATION</span>
+      <span class="sim-title">محاكاة تأثير الـ FPS على سلاسة الحركة</span>
+    </div>
+
+    <div class="sim-box">
+      <canvas id="fpsCan" height="160"></canvas>
+      <div class="sim-controls">
+        <label>FPS:</label>
+        <input type="range" id="fpsSlider" min="1" max="60" value="24" style="width:140px">
+        <span id="fpsVal" class="sim-info">24 fps</span>
+        <button class="btn btn-sm" id="fpsPlay">▶ تشغيل</button>
+      </div>
+    </div>
+
+    <div class="note" style="margin-top:12px; direction:ltr; font-family:'Space Mono',monospace; font-size:0.8rem;">
+      جرب تحرك الـ slider من 1 إلى 60 وشوف الفرق في سلاسة الحركة
+    </div>
+  </section>
+
+  <!-- ===== 4. FILE FORMATS ===== -->
+  <section id="formats">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2>Web Page Animation File Formats</h2>
+    </div>
+    <div style="display:grid; gap:14px;">
+      <div class="card" style="border-right: 3px solid var(--accent3);">
+        <h3>① GIF</h3>
+        <p>Sequence of images — بدون صوت — ألوان لحد 256 — Losslessly Compressed<br>
+        <span style="color:var(--muted); font-size:0.82rem;">ده أول نوع كان عبارة من كذا Frame بيلفوا حوالين نفسه — ما نتشفيه موت</span></p>
+        <div class="tag-list">
+          <span class="tag" style="border-color:rgba(108,247,200,0.4);color:var(--accent3)">Lossless</span>
+          <span class="tag" style="border-color:rgba(247,108,108,0.4);color:var(--accent2)">No Sound</span>
+          <span class="tag" style="border-color:rgba(124,106,247,0.4);color:var(--accent)">256 Colors</span>
+        </div>
+      </div>
+      <div class="card" style="border-right: 3px solid var(--accent);">
+        <h3>② QuickTime</h3>
+        <p>فورمات أبل للفيديو — يدعم ألوان كاملة وصوت</p>
+      </div>
+      <div class="card" style="border-right: 3px solid var(--accent4);">
+        <h3>③ Heritage Animation (1800s)</h3>
+        <p>كاميرا بتخلي حاجات جامدة تتحرك — ده أصل الأنيميشن. كنا بنستخدم كاميرا وأدوات ونمثلها وكانت بتتعلب المورة قدامك وانت بتمثلها كأنها فيديو</p>
+      </div>
+      <div class="card" style="border-right: 3px solid var(--accent2);">
+        <h3>④ Disney (1928)</h3>
+        <p>أول Cel Animation — أضافوا Story + Pencil Sketch + Color + Sound + Multi-Plane Camera Stand<br>
+        كان بيرسم Frame by Frame وعلشان ما يسهلش عملوا طبقات فوق الأخرى</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 5. TWO CATEGORIES ===== -->
+  <section id="categories">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2>التصنيفان الرئيسيان</h2>
+    </div>
+    <div class="two-col">
+      <div class="card" style="border-top: 3px solid var(--accent)">
+        <h3>Computer-Assisted Animation</h3>
+        <ul style="color:#b0b0c8; font-size:0.88rem; line-height:2; padding-right:16px;">
+          <li>2D و 2.5D</li>
+          <li>Inbetweening</li>
+          <li>Virtual Camera Managing</li>
+          <li>Data Management</li>
+        </ul>
+        <div class="note" style="margin-top:12px">
+          أنت بتتحكم والكمبيوتر بيساعدك
+        </div>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--accent3)">
+        <h3>Computer-Generated Animation</h3>
+        <ul style="color:#b0b0c8; font-size:0.88rem; line-height:2; padding-right:16px;">
+          <li>Low Level: Specifying Motion</li>
+          <li>High Level: Set of Rules</li>
+          <li>Physically Based Motion</li>
+        </ul>
+        <div class="note correct" style="margin-top:12px">
+          الكمبيوتر هو اللي بيعمل الأنيميشن بناءً على قواعد
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <h3 style="margin-bottom:16px">خطوات Simple Computer Animation</h3>
+    <div style="display:grid; gap:12px;">
+      <div class="card">
+        <div style="font-family:'Space Mono',monospace; font-size:0.7rem; color:var(--accent); margin-bottom:8px">STEP 01</div>
+        <h3>Creating Animation Sequences</h3>
+        <div class="tag-list">
+          <span class="tag" style="border-color:rgba(124,106,247,0.4);color:var(--accent)">Object</span>
+          <span class="tag" style="border-color:rgba(108,247,200,0.4);color:var(--accent3)">Path Specification</span>
+          <span class="tag" style="border-color:rgba(247,201,108,0.4);color:var(--accent4)">Key Frames</span>
+          <span class="tag" style="border-color:rgba(247,108,108,0.4);color:var(--accent2)">Inbetweening</span>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-family:'Space Mono',monospace; font-size:0.7rem; color:var(--accent); margin-bottom:8px">STEP 02</div>
+        <h3>Displaying the Sequences</h3>
+        <div class="tag-list">
+          <span class="tag" style="border-color:rgba(124,106,247,0.4);color:var(--accent)">Raster Animation</span>
+          <span class="tag" style="border-color:rgba(108,247,200,0.4);color:var(--accent3)">Color-Table Animation</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 6. KEYFRAMING ===== -->
+  <section id="keyframing">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2>Keyframing</h2>
+    </div>
+
+    <div class="def-box">
+      <div class="en">Keyframing → Describe motion of object</div>
+      <div class="ar">بدل ما ترسم كل frame، بترسم الـ Key Frames (البداية والنهاية) والكمبيوتر يعمل الـ Inbetween frames تلقائياً</div>
+    </div>
+
+    <div class="two-col">
+      <div class="formula-box">
+        <div style="color:var(--muted); font-size:0.7rem; margin-bottom:8px">POSITION INTERPOLATION</div>
+        <div class="formula">Δx = (x' - x) / n</div>
+        <div class="formula-note">n = عدد الـ inbetween frames</div>
+        <div class="formula-note" style="margin-top:4px">كل frame بتتحرك Δx في x</div>
+      </div>
+      <div class="formula-box">
+        <div style="color:var(--muted); font-size:0.7rem; margin-bottom:8px">ROTATION INTERPOLATION</div>
+        <div class="formula">Δangle = (φ - θ) / n</div>
+        <div class="formula-note">قيمة الـ Rotation اللي هيعملها كل Frame</div>
+      </div>
+    </div>
+
+    <div class="note" style="margin-top:16px">
+      مثال: عندك Key عند (x,y) وKey عند (x',y') وفي 22 frame بينهم → كل frame بتتحرك (x'-x)/22
+    </div>
+  </section>
+
+  <!-- ===== SIM 2: KEYFRAMING ===== -->
+  <section id="sim-key">
+    <div class="sim-label">
+      <span class="sim-badge">SIMULATION</span>
+      <span class="sim-title">محاكاة Keyframing — اضغط لتحديد Key Frames</span>
+    </div>
+
+    <div class="sim-box">
+      <canvas id="keyCan" height="220"></canvas>
+      <div class="sim-controls">
+        <button class="btn btn-sm" id="keyPlay">▶ تشغيل</button>
+        <button class="btn btn-sm" id="keyReset">↺ إعادة</button>
+        <span id="keyInfo" class="sim-info">اضغط على الـ canvas لإضافة Key Frame</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 7. MOTION CAPTURE ===== -->
+  <section id="mocap">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2>Motion Capture Animation</h2>
+    </div>
+
+    <div class="def-box">
+      <div class="en">Process of recording real-world motion and converting it into data to animate a 3D character</div>
+      <div class="ar">بنسجل حركة حقيقية (إنسان أو حيوان) وبنحولها لـ data عشان نحرك شخصية 3D بدل ما نرسمها من أول وجديد</div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+      <h3>الآلية</h3>
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; direction:ltr; font-size:0.82rem; font-family:'Space Mono',monospace;">
+        <span style="background:rgba(124,106,247,0.2); padding:8px 14px; border-radius:8px; color:var(--accent)">Actor + Suit</span>
+        <span style="color:var(--muted)">→</span>
+        <span style="background:rgba(108,247,200,0.2); padding:8px 14px; border-radius:8px; color:var(--accent3)">Sensors + Cameras</span>
+        <span style="color:var(--muted)">→</span>
+        <span style="background:rgba(247,201,108,0.2); padding:8px 14px; border-radius:8px; color:var(--accent4)">3D Data</span>
+        <span style="color:var(--muted)">→</span>
+        <span style="background:rgba(247,108,108,0.2); padding:8px 14px; border-radius:8px; color:var(--accent2)">Character Skeleton</span>
+      </div>
+    </div>
+
+    <div class="card" style="overflow:auto">
+      <h3 style="margin-bottom:16px">أنواع Motion Capture</h3>
+      <table class="data-table">
+        <thead>
+          <tr><th>النوع</th><th>المميزات ✅</th><th>العيوب ❌</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Optical</strong><br><small style="color:var(--muted)">كاميرات + Reflective Markers</small></td>
+            <td><span class="badge badge-green">High Accuracy</span></td>
+            <td><span class="badge badge-red">Occlusion Problem</span></td>
+          </tr>
+          <tr>
+            <td><strong>Magnetic</strong><br><small style="color:var(--muted)">مجال مغناطيسي</small></td>
+            <td><span class="badge badge-green">No Occlusion</span></td>
+            <td><span class="badge badge-red">Limited Range</span></td>
+          </tr>
+          <tr>
+            <td><strong>Mechanical</strong><br><small style="color:var(--muted)">بدلة بتقيس زوايا المفاصل</small></td>
+            <td><span class="badge badge-green">Very Accurate</span></td>
+            <td><span class="badge badge-red">Restricts Movement</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="two-col" style="margin-top:16px">
+      <div class="card" style="border-top:3px solid var(--accent3)">
+        <h3>المزايا</h3>
+        <ul style="color:#b0b0c8; font-size:0.85rem; line-height:2; padding-right:16px;">
+          <li>واقعي جداً</li>
+          <li>إنتاج أسرع</li>
+          <li>بيلتقط تفاصيل دقيقة</li>
+        </ul>
+      </div>
+      <div class="card" style="border-top:3px solid var(--accent2)">
+        <h3>العيوب</h3>
+        <ul style="color:#b0b0c8; font-size:0.85rem; line-height:2; padding-right:16px;">
+          <li>غالي جداً</li>
+          <li>صعب التعديل عليه</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 8. CEL ANIMATION ===== -->
+  <section id="cel">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <h2>Cel Animation & Raster Animation</h2>
+    </div>
+
+    <div class="two-col">
+      <div class="card" style="border-right:3px solid var(--accent)">
+        <h3>Cel Animation</h3>
+        <p>الخلفية ثابتة — العناصر المتحركة بتتُرسم على شفافيات (Cel) وبتتحط فوق الخلفية.</p>
+        <div class="note correct" style="margin-top:12px">= رسم عناصر متحركة فوق خلفية ثابتة</div>
+      </div>
+      <div class="card" style="border-right:3px solid var(--accent3)">
+        <h3>Raster Animation</h3>
+        <p>الـ Frames بتتنسخ بسرعة عالية من off-screen memory للـ Frame Buffer.</p>
+        <div class="note" style="margin-top:12px">ممكن تنسخ Complete Frames أو بس الأجزاء اللي فيها حركة</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SIM 3: CEL ===== -->
+  <section id="sim-cel">
+    <div class="sim-label">
+      <span class="sim-badge">SIMULATION</span>
+      <span class="sim-title">محاكاة Cel Animation — خلفية ثابتة + عناصر متحركة</span>
+    </div>
+
+    <div class="sim-box">
+      <canvas id="celCan" height="240"></canvas>
+      <div class="sim-controls">
+        <button class="btn btn-sm" id="celPlay">▶ تشغيل</button>
+        <button class="btn btn-sm active" id="celBg">✅ إظهار الـ Cel</button>
+        <span class="sim-info" id="celInfo">الخلفية ثابتة — الشخصيات على Cel منفصلة</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 9. 12 PRINCIPLES ===== -->
+  <section id="principles">
+    <div class="section-header">
+      <span class="section-num">09</span>
+      <h2>12 Fundamental Principles of Animation</h2>
+    </div>
+
+    <p style="margin-bottom:24px">أساسيات الأنيميشن اللي حددتها Disney — كل مصمم أنيميشن محتاج يعرفهم.</p>
+
+    <div class="principles-grid">
+      <div class="principle-card">
+        <div class="principle-num">01</div>
+        <div class="principle-name">Timing & Spacing</div>
+        <div class="principle-desc">توقيت وتباعد الحركة — يحدد سرعة الجسم</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">02</div>
+        <div class="principle-name">Arcs</div>
+        <div class="principle-desc">الحركة الطبيعية على قوس مش خط مستقيم</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">03</div>
+        <div class="principle-name">Anticipation</div>
+        <div class="principle-desc">التمهيد للحركة قبل ما تحصل</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">04</div>
+        <div class="principle-name">Exaggeration</div>
+        <div class="principle-desc">مبالغة لتوضيح الحركة وزيادة التأثير</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">05</div>
+        <div class="principle-name">Squash & Stretch</div>
+        <div class="principle-desc">انضغاط وامتداد — يعطي إحساس بالوزن والمرونة</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">06</div>
+        <div class="principle-name">Secondary Actions</div>
+        <div class="principle-desc">أفعال ثانوية تدعم الحركة الرئيسية</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">07</div>
+        <div class="principle-name">Follow Through</div>
+        <div class="principle-desc">الأجزاء بتكمل حركتها بعد توقف الجسم الرئيسي</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">08</div>
+        <div class="principle-name">Straight Ahead</div>
+        <div class="principle-desc">رسم frame by frame من البداية للنهاية</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">09</div>
+        <div class="principle-name">Staging</div>
+        <div class="principle-desc">توجيه انتباه المشاهد للحدث المهم</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">10</div>
+        <div class="principle-name">Solid Drawing</div>
+        <div class="principle-desc">الرسم بشكل ثلاثي الأبعاد واقعي</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">11</div>
+        <div class="principle-name">Appeal</div>
+        <div class="principle-desc">جاذبية الشخصية للمشاهد</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">12</div>
+        <div class="principle-name">Slow In & Slow Out</div>
+        <div class="principle-desc">الحركة بتبدأ وتنتهي ببطء — أكثر طبيعية</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 10. INTERPOLATION ===== -->
+  <section id="interp">
+    <div class="section-header">
+      <span class="section-num">10</span>
+      <h2>Interpolation</h2>
+    </div>
+
+    <div class="two-col">
+      <div class="card" style="border-top:3px solid var(--accent3)">
+        <h3>Linear Interpolation</h3>
+        <p>حركة على خط مستقيم — سرعة ثابتة طول الطريق. زي ما كان الجسم آلة.</p>
+        <div class="formula-box" style="margin-top:12px">
+          <div class="formula" style="font-size:0.9rem">p(t) = p₀ + t(p₁ - p₀)</div>
+          <div class="formula-note">t من 0 لـ 1</div>
+        </div>
+      </div>
+      <div class="card" style="border-top:3px solid var(--accent)">
+        <h3>Non-Linear (Curve)</h3>
+        <p>حركة على منحنى — أكثر طبيعية وواقعية. الكمبيوتر بيفضله في الـ action.</p>
+        <div class="note correct" style="margin-top:12px">
+          ده اللي الكمبيوتر بيستخدمه في الـ Inbetweens ويبامك لو وبياندك لو
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SIM 4: INTERPOLATION ===== -->
+  <section id="sim-interp">
+    <div class="sim-label">
+      <span class="sim-badge">SIMULATION</span>
+      <span class="sim-title">محاكاة Linear vs Non-Linear Interpolation</span>
+    </div>
+
+    <div class="sim-box">
+      <canvas id="interpCan" height="260"></canvas>
+      <div class="sim-controls">
+        <button class="btn btn-sm active" id="interpLinear">Linear</button>
+        <button class="btn btn-sm" id="interpCurve">Non-Linear (Ease)</button>
+        <button class="btn btn-sm" id="interpPlay">▶ تشغيل</button>
+        <span class="sim-info" id="interpInfo">Linear: سرعة ثابتة على خط مستقيم</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>Computer Graphics — <span>Lecture 9: Animation</span> | شرح تفاعلي</p>
+</footer>
+
+<script>
+// =============================================
+// UTILITY
+// =============================================
+function resizeCan(can) {
+  const w = can.parentElement.clientWidth;
+  can.width = w;
+}
+
+// =============================================
+// SIM 1: FPS DEMO
+// =============================================
+(function() {
+  const can = document.getElementById('fpsCan');
+  const ctx = can.getContext('2d');
+  const slider = document.getElementById('fpsSlider');
+  const valEl = document.getElementById('fpsVal');
+  const btn = document.getElementById('fpsPlay');
+
+  let running = false;
+  let x = 0;
+  let lastTime = 0;
+  let accumulator = 0;
+  let rafId = null;
+  let framePositions = [];
+
+  resizeCan(can);
+  const W = can.width, H = can.height;
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // track
+    ctx.strokeStyle = 'rgba(124,106,247,0.2)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(30, H/2);
+    ctx.lineTo(W-30, H/2);
+    ctx.stroke();
+
+    // start/end markers
+    ctx.fillStyle = 'rgba(108,247,200,0.5)';
+    ctx.beginPath(); ctx.arc(30, H/2, 5, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(W-30, H/2, 5, 0, Math.PI*2); ctx.fill();
+
+    // frame dots trail
+    framePositions.forEach((fx, i) => {
+      const a = (i / framePositions.length) * 0.6;
+      ctx.fillStyle = `rgba(124,106,247,${a})`;
+      ctx.beginPath();
+      ctx.arc(fx, H/2, 3, 0, Math.PI*2);
+      ctx.fill();
+    });
+
+    // ball
+    const bx = 30 + x * (W - 60);
+    ctx.shadowColor = '#7c6af7';
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = '#7c6af7';
+    ctx.beginPath();
+    ctx.arc(bx, H/2, 14, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // fps label
+    const fps = parseInt(slider.value);
+    ctx.fillStyle = 'rgba(247,201,108,0.9)';
+    ctx.font = '700 14px Space Mono, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${fps} fps`, 14, 24);
+  }
+
+  function loop(ts) {
+    if (!running) return;
+    const fps = parseInt(slider.value);
+    const dt = ts - lastTime;
+    lastTime = ts;
+    accumulator += dt;
+    const interval = 1000 / fps;
+    if (accumulator >= interval) {
+      accumulator -= interval;
+      x += 0.012;
+      if (x > 1) { x = 0; framePositions = []; }
+      const bx = 30 + x * (can.width - 60);
+      framePositions.push(bx);
+      if (framePositions.length > fps * 2) framePositions.shift();
+    }
+    draw();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  btn.addEventListener('click', () => {
+    running = !running;
+    btn.textContent = running ? '⏸ إيقاف' : '▶ تشغيل';
+    if (running) { lastTime = performance.now(); rafId = requestAnimationFrame(loop); }
+    else cancelAnimationFrame(rafId);
+  });
+
+  slider.addEventListener('input', () => {
+    valEl.textContent = slider.value + ' fps';
+    framePositions = [];
+  });
+
+  draw();
+})();
+
+// =============================================
+// SIM 2: KEYFRAMING
+// =============================================
+(function() {
+  const can = document.getElementById('keyCan');
+  const ctx = can.getContext('2d');
+  const playBtn = document.getElementById('keyPlay');
+  const resetBtn = document.getElementById('keyReset');
+  const info = document.getElementById('keyInfo');
+
+  resizeCan(can);
+  const W = can.width, H = can.height;
+
+  let keys = [];
+  let playing = false;
+  let t = 0;
+  let rafId = null;
+
+  function drawScene() {
+    ctx.clearRect(0, 0, W, H);
+
+    // grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let gx = 0; gx < W; gx += 50) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke(); }
+    for (let gy = 0; gy < H; gy += 50) { ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
+
+    // path between keys
+    if (keys.length > 1) {
+      ctx.strokeStyle = 'rgba(124,106,247,0.4)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6,4]);
+      ctx.beginPath();
+      ctx.moveTo(keys[0].x, keys[0].y);
+      for (let i = 1; i < keys.length; i++) ctx.lineTo(keys[i].x, keys[i].y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // inbetween dots
+      for (let i = 0; i < keys.length - 1; i++) {
+        const n = 8;
+        for (let j = 1; j < n; j++) {
+          const ft = j / n;
+          const ix = keys[i].x + ft * (keys[i+1].x - keys[i].x);
+          const iy = keys[i].y + ft * (keys[i+1].y - keys[i].y);
+          ctx.fillStyle = 'rgba(108,247,200,0.4)';
+          ctx.beginPath(); ctx.arc(ix, iy, 3, 0, Math.PI*2); ctx.fill();
+        }
+      }
+    }
+
+    // key frames
+    keys.forEach((k, i) => {
+      ctx.shadowColor = '#f7c96c';
+      ctx.shadowBlur = 15;
+      ctx.fillStyle = '#f7c96c';
+      ctx.beginPath(); ctx.arc(k.x, k.y, 10, 0, Math.PI*2); ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#0a0a0f';
+      ctx.font = 'bold 9px Space Mono,monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`K${i+1}`, k.x, k.y);
+
+      ctx.fillStyle = 'rgba(247,201,108,0.7)';
+      ctx.font = '10px Cairo,sans-serif';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(`(${Math.round(k.x)}, ${Math.round(k.y)})`, k.x, k.y - 14);
+    });
+
+    // animated ball
+    if (playing && keys.length > 1) {
+      const total = keys.length - 1;
+      const seg = t * total;
+      const si = Math.min(Math.floor(seg), total - 1);
+      const st = seg - si;
+      const bx = keys[si].x + st * (keys[si+1].x - keys[si].x);
+      const by = keys[si].y + st * (keys[si+1].y - keys[si].y);
+
+      ctx.shadowColor = '#7c6af7';
+      ctx.shadowBlur = 25;
+      ctx.fillStyle = '#7c6af7';
+      ctx.beginPath(); ctx.arc(bx, by, 13, 0, Math.PI*2); ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  can.addEventListener('click', (e) => {
+    if (playing) return;
+    const r = can.getBoundingClientRect();
+    const scaleX = can.width / r.width;
+    const scaleY = can.height / r.height;
+    keys.push({ x: (e.clientX - r.left) * scaleX, y: (e.clientY - r.top) * scaleY });
+    info.textContent = `${keys.length} Key Frames — اضغط Play للتشغيل`;
+    drawScene();
+  });
+
+  function animate(ts) {
+    t += 0.008;
+    if (t > 1) { t = 0; }
+    drawScene();
+    rafId = requestAnimationFrame(animate);
+  }
+
+  playBtn.addEventListener('click', () => {
+    if (keys.length < 2) { info.textContent = 'محتاج على الأقل Key Frame اتنين!'; return; }
+    playing = !playing;
+    playBtn.textContent = playing ? '⏸ إيقاف' : '▶ تشغيل';
+    if (playing) { t = 0; rafId = requestAnimationFrame(animate); }
+    else { cancelAnimationFrame(rafId); drawScene(); }
+  });
+
+  resetBtn.addEventListener('click', () => {
+    playing = false;
+    cancelAnimationFrame(rafId);
+    keys = []; t = 0;
+    playBtn.textContent = '▶ تشغيل';
+    info.textContent = 'اضغط على الـ canvas لإضافة Key Frame';
+    drawScene();
+  });
+
+  drawScene();
+})();
+
+// =============================================
+// SIM 3: CEL ANIMATION
+// =============================================
+(function() {
+  const can = document.getElementById('celCan');
+  const ctx = can.getContext('2d');
+  const playBtn = document.getElementById('celPlay');
+  const bgBtn = document.getElementById('celBg');
+  const info = document.getElementById('celInfo');
+
+  resizeCan(can);
+  const W = can.width, H = can.height;
+
+  let running = false;
+  let rafId = null;
+  let t = 0;
+  let showCel = true;
+
+  function drawBackground() {
+    // Sky
+    const sky = ctx.createLinearGradient(0,0,0,H*0.7);
+    sky.addColorStop(0,'#0a0a1f');
+    sky.addColorStop(1,'#1a1a3f');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0,0,W,H*0.7);
+
+    // Stars
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    [[W*0.1,20],[W*0.25,35],[W*0.5,15],[W*0.7,40],[W*0.85,25],[W*0.4,55],[W*0.6,70]].forEach(([sx,sy]) => {
+      ctx.beginPath(); ctx.arc(sx,sy,1.5,0,Math.PI*2); ctx.fill();
+    });
+
+    // Moon
+    ctx.shadowColor = '#fff';
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = '#fffde0';
+    ctx.beginPath(); ctx.arc(W-70, 50, 22, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Ground
+    const gr = ctx.createLinearGradient(0,H*0.65,0,H);
+    gr.addColorStop(0,'#1a2a1a');
+    gr.addColorStop(1,'#0a150a');
+    ctx.fillStyle = gr;
+    ctx.fillRect(0,H*0.65,W,H*0.35);
+
+    // Hills
+    ctx.fillStyle = 'rgba(30,50,30,0.8)';
+    ctx.beginPath();
+    ctx.moveTo(0,H*0.7);
+    ctx.quadraticCurveTo(W*0.15,H*0.55,W*0.3,H*0.68);
+    ctx.quadraticCurveTo(W*0.45,H*0.58,W*0.6,H*0.65);
+    ctx.quadraticCurveTo(W*0.75,H*0.55,W,H*0.68);
+    ctx.lineTo(W,H); ctx.lineTo(0,H);
+    ctx.closePath(); ctx.fill();
+
+    // Trees
+    function drawTree(tx, ty, size) {
+      ctx.fillStyle = '#0d200d';
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.lineTo(tx - size, ty + size*1.8);
+      ctx.lineTo(tx + size, ty + size*1.8);
+      ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(tx, ty - size*0.5);
+      ctx.lineTo(tx - size*0.7, ty + size);
+      ctx.lineTo(tx + size*0.7, ty + size);
+      ctx.closePath(); ctx.fill();
+    }
+    drawTree(W*0.1, H*0.62, 18);
+    drawTree(W*0.2, H*0.65, 14);
+    drawTree(W*0.8, H*0.6, 20);
+    drawTree(W*0.9, H*0.63, 15);
+  }
+
+  function drawCelLayer(t) {
+    // Walking character
+    const cx = W * 0.15 + (t % 1) * W * 0.7;
+    const cy = H * 0.62;
+    const bob = Math.sin(t * Math.PI * 8) * 4;
+
+    // Body
+    ctx.fillStyle = '#7c6af7';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 20 + bob, 12, 18, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // Head
+    ctx.fillStyle = '#f7c96c';
+    ctx.beginPath();
+    ctx.arc(cx, cy - 44 + bob, 12, 0, Math.PI*2);
+    ctx.fill();
+
+    // Eyes
+    ctx.fillStyle = '#0a0a0f';
+    ctx.beginPath(); ctx.arc(cx + 4, cy - 46 + bob, 2, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx - 4, cy - 46 + bob, 2, 0, Math.PI*2); ctx.fill();
+
+    // Legs
+    const legSwing = Math.sin(t * Math.PI * 8) * 12;
+    ctx.strokeStyle = '#5a4ab7';
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(cx, cy - 4 + bob); ctx.lineTo(cx - legSwing, cy + 20 + bob); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy - 4 + bob); ctx.lineTo(cx + legSwing, cy + 20 + bob); ctx.stroke();
+
+    // Arms
+    const armSwing = Math.sin(t * Math.PI * 8 + Math.PI) * 15;
+    ctx.strokeStyle = '#f7c96c';
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(cx, cy - 22 + bob); ctx.lineTo(cx - 16 + armSwing, cy - 10 + bob); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy - 22 + bob); ctx.lineTo(cx + 16 - armSwing, cy - 10 + bob); ctx.stroke();
+
+    // Second character
+    const cx2 = W*0.6 + Math.sin(t * 0.8) * 40;
+    const cy2 = H * 0.6;
+    ctx.fillStyle = '#f76c6c';
+    ctx.beginPath(); ctx.ellipse(cx2, cy2 - 15, 10, 15, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#ffccaa';
+    ctx.beginPath(); ctx.arc(cx2, cy2 - 35, 10, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#0a0a0f';
+    ctx.beginPath(); ctx.arc(cx2 + 3, cy2 - 37, 2, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx2 - 3, cy2 - 37, 2, 0, Math.PI*2); ctx.fill();
+  }
+
+  function render() {
+    ctx.clearRect(0,0,W,H);
+    drawBackground();
+    if (showCel) drawCelLayer(t);
+  }
+
+  function loop() {
+    t += 0.005;
+    render();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  playBtn.addEventListener('click', () => {
+    running = !running;
+    playBtn.textContent = running ? '⏸ إيقاف' : '▶ تشغيل';
+    if (running) rafId = requestAnimationFrame(loop);
+    else { cancelAnimationFrame(rafId); render(); }
+  });
+
+  bgBtn.addEventListener('click', () => {
+    showCel = !showCel;
+    bgBtn.textContent = showCel ? '✅ إظهار الـ Cel' : '☐ إخفاء الـ Cel';
+    info.textContent = showCel ? 'الخلفية ثابتة — الشخصيات على Cel منفصلة' : 'الخلفية وحدها — الـ Cel مخفي';
+    if (!running) render();
+  });
+
+  render();
+})();
+
+// =============================================
+// SIM 4: INTERPOLATION
+// =============================================
+(function() {
+  const can = document.getElementById('interpCan');
+  const ctx = can.getContext('2d');
+  const linBtn = document.getElementById('interpLinear');
+  const curBtn = document.getElementById('interpCurve');
+  const playBtn = document.getElementById('interpPlay');
+  const info = document.getElementById('interpInfo');
+
+  resizeCan(can);
+  const W = can.width, H = can.height;
+
+  let mode = 'linear';
+  let t = 0;
+  let running = false;
+  let rafId = null;
+
+  const PAD = 60;
+  const startX = PAD, endX = W - PAD;
+  const Y = H * 0.4;
+
+  function easeInOut(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+  function getX(t) {
+    const ft = mode === 'linear' ? t : easeInOut(t);
+    return startX + ft * (endX - startX);
+  }
+
+  function drawScene() {
+    ctx.clearRect(0,0,W,H);
+
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let gx = 0; gx < W; gx += 60) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke(); }
+    for (let gy = 0; gy < H; gy += 60) { ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
+
+    // Timeline axis
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD, H*0.85); ctx.lineTo(W-PAD, H*0.85); ctx.stroke();
+
+    // Graph: position over time
+    const graphY = H * 0.85;
+    const graphH = H * 0.3;
+
+    ctx.strokeStyle = mode === 'linear' ? '#6cf7c8' : '#7c6af7';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 100; i++) {
+      const gT = i / 100;
+      const gX = PAD + gT * (W - PAD*2);
+      const fT = mode === 'linear' ? gT : easeInOut(gT);
+      const gYv = graphY - fT * graphH;
+      if (i === 0) ctx.moveTo(gX, gYv); else ctx.lineTo(gX, gYv);
+    }
+    ctx.stroke();
+
+    // Graph labels
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '10px Space Mono,monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('pos', PAD - 30, graphY - graphH);
+    ctx.fillText('0', PAD - 10, graphY + 4);
+    ctx.textAlign = 'center';
+    ctx.fillText('time →', W/2, H - 10);
+
+    // Path track
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(startX, Y); ctx.lineTo(endX, Y); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Velocity dots (showing spacing)
+    const steps = mode === 'linear' ? 12 : 12;
+    for (let i = 0; i <= steps; i++) {
+      const st = i / steps;
+      const sx = getX(st);
+      ctx.fillStyle = 'rgba(124,106,247,0.4)';
+      ctx.beginPath(); ctx.arc(sx, Y, 4, 0, Math.PI*2); ctx.fill();
+    }
+
+    // Start/End
+    ctx.shadowColor = '#6cf7c8';
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = '#6cf7c8';
+    ctx.beginPath(); ctx.arc(startX, Y, 8, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(endX, Y, 8, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Ball
+    const bx = getX(t);
+    ctx.shadowColor = '#7c6af7';
+    ctx.shadowBlur = 25;
+    ctx.fillStyle = '#7c6af7';
+    ctx.beginPath(); ctx.arc(bx, Y, 16, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Labels
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = '11px Cairo,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Key Frame A', startX, Y - 30);
+    ctx.fillText('Key Frame B', endX, Y - 30);
+
+    // Mode label
+    ctx.font = 'bold 13px Cairo,sans-serif';
+    ctx.fillStyle = mode === 'linear' ? '#6cf7c8' : '#7c6af7';
+    ctx.textAlign = 'left';
+    ctx.fillText(mode === 'linear' ? '⟶ Linear: سرعة ثابتة' : '◉ Ease In/Out: طبيعي', 20, 24);
+
+    // Progress marker on graph
+    if (running || t > 0) {
+      const gX = PAD + t * (W - PAD*2);
+      const fT = mode === 'linear' ? t : easeInOut(t);
+      const gYv = H * 0.85 - fT * H * 0.3;
+      ctx.fillStyle = '#f7c96c';
+      ctx.beginPath(); ctx.arc(gX, gYv, 5, 0, Math.PI*2); ctx.fill();
+    }
+
+    ctx.textBaseline = 'alphabetic';
+    ctx.textAlign = 'left';
+  }
+
+  function loop() {
+    t += 0.006;
+    if (t > 1) t = 0;
+    drawScene();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  linBtn.addEventListener('click', () => {
+    mode = 'linear';
+    linBtn.classList.add('active'); curBtn.classList.remove('active');
+    info.textContent = 'Linear: سرعة ثابتة على خط مستقيم';
+    if (!running) drawScene();
+  });
+
+  curBtn.addEventListener('click', () => {
+    mode = 'ease';
+    curBtn.classList.add('active'); linBtn.classList.remove('active');
+    info.textContent = 'Non-Linear: بيبدأ ببطء وبيسرع وبيرجع يبطأ — أكثر طبيعية';
+    if (!running) drawScene();
+  });
+
+  playBtn.addEventListener('click', () => {
+    running = !running;
+    playBtn.textContent = running ? '⏸ إيقاف' : '▶ تشغيل';
+    if (running) rafId = requestAnimationFrame(loop);
+    else { cancelAnimationFrame(rafId); drawScene(); }
+  });
+
+  drawScene();
+})();
+
+// Resize handling
+window.addEventListener('resize', () => {
+  ['fpsCan','keyCan','celCan','interpCan'].forEach(id => {
+    const c = document.getElementById(id);
+    if (c) resizeCan(c);
+  });
+});
+</script>
+</body>
+</html>
